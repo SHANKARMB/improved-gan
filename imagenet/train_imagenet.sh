@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 export word=imagenet
 export pixels=128
 echo $HOSTNAME >> ${word}.record.txt

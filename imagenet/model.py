@@ -26,7 +26,7 @@ class DCGAN(object):
                  devices=None,
                  disable_vbn=False,
                  sample_size=64,
-		 out_init_b=0.,
+         out_init_b=0.,
                  out_stddev=.15):
         """
 
@@ -44,36 +44,36 @@ class DCGAN(object):
         self.disable_vbn = disable_vbn
         self.devices = devices
         self.d_label_smooth = d_label_smooth
-	self.out_init_b = out_init_b
-	self.out_stddev = out_stddev
+        self.out_init_b = out_init_b
+        self.out_stddev = out_stddev
         self.config = config
         self.generator_target_prob = generator_target_prob
         if generator is not None:
             generator.dcgan = self
         else:
-            if generator_func is None:
-                generator_func = default_generator
+            # if generator_func is None:
+            #     generator_func = default_generator
             if generator_cls is None:
                 generator_cls = Generator
             generator = generator_cls(self, generator_func)
         self.generator = generator
-        if discriminator_func is None:
-            discriminator_func = default_discriminator
+        # if discriminator_func is None:
+        #     discriminator_func = default_discriminator
         self.discriminator = Discriminator(self, discriminator_func)
         if train is not None:
             self.train = train
             train.dcgan = self
         else:
-            if train_func is None:
-                train_func = default_train
+            # if train_func is None:
+            #     train_func = default_train
             self.train = Train(self, train_func)
         if build_model is not None:
             assert build_model_func is None
             build_model.gan = self
             self.build_model = build_model
         else:
-            if build_model_func is None:
-                build_model_func = default_build_model
+            # if build_model_func is None:
+            #     build_model_func = default_build_model
             self.build_model = BuildModel(self, build_model_func)
         self.sess = sess
         self.is_crop = is_crop
@@ -226,7 +226,7 @@ class DCGAN(object):
             self.saver.restore(self.sess, os.path.join(checkpoint_dir, ckpt_name))
             return True
         else:
-            print "Bad checkpoint: ", ckpt
+            print("Bad checkpoint: ", ckpt)
             return False
 
 

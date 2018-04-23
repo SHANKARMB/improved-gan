@@ -2,8 +2,8 @@ import tensorflow as tf
 import numpy as np
 from ops import lrelu, conv2d, linear
 
-def discriminator(self, image, reuse=False, y=None, prefix=""):
 
+def discriminator(self, image, reuse=False, y=None, prefix=""):
     num_classes = 1001
 
     if reuse:
@@ -41,47 +41,48 @@ def discriminator(self, image, reuse=False, y=None, prefix=""):
     """
 
     noisy_image = image + tf.random_normal([batch_size, 128, 128, 3],
-            mean=0.0,
-            stddev=.1)
+                                           mean=0.0,
+                                           stddev=.1)
 
-    print "Discriminator shapes"
-    print "image: ", image.get_shape()
+    print("Discriminator shapes")
+    print("image: ", image.get_shape())
+
     def tower(bn, suffix):
         assert not self.y_dim
-        print "\ttower "+suffix
+        print("\ttower " + suffix)
         h0 = lrelu(bn(conv2d(noisy_image, self.df_dim, name='d_h0_conv' + suffix, d_h=2, d_w=2,
-            k_w=3, k_h=3), "d_bn_0" + suffix))
-        print "\th0 ", h0.get_shape()
+                             k_w=3, k_h=3), "d_bn_0" + suffix))
+        print("\th0 ", h0.get_shape())
         h1 = lrelu(bn(conv2d(h0, self.df_dim * 2, name='d_h1_conv' + suffix, d_h=2, d_w=2,
-            k_w=3, k_h=3), "d_bn_1" + suffix))
-        print "\th1 ", h1.get_shape()
+                             k_w=3, k_h=3), "d_bn_1" + suffix))
+        print("\th1 ", h1.get_shape())
         h2 = lrelu(bn(conv2d(h1, self.df_dim * 4, name='d_h2_conv' + suffix, d_h=2, d_w=2,
-            k_w=3, k_h=3), "d_bn_2" + suffix))
-        print "\th2 ", h2.get_shape()
+                             k_w=3, k_h=3), "d_bn_2" + suffix))
+        print("\th2 ", h2.get_shape())
 
-        h3 = lrelu(bn(conv2d(h2, self.df_dim*4, name='d_h3_conv' + suffix, d_h=1, d_w=1,
-            k_w=3, k_h=3), "d_bn_3" + suffix))
-        print "\th3 ", h3.get_shape()
-        h4 = lrelu(bn(conv2d(h3, self.df_dim*4, name='d_h4_conv' + suffix, d_h=1, d_w=1,
-            k_w=3, k_h=3), "d_bn_4" + suffix))
-        print "\th4 ", h4.get_shape()
-        h5 = lrelu(bn(conv2d(h4, self.df_dim*8, name='d_h5_conv' + suffix, d_h=2, d_w=2,
-            k_w=3, k_h=3), "d_bn_5" + suffix))
-        print "\th5 ", h5.get_shape()
+        h3 = lrelu(bn(conv2d(h2, self.df_dim * 4, name='d_h3_conv' + suffix, d_h=1, d_w=1,
+                             k_w=3, k_h=3), "d_bn_3" + suffix))
+        print("\th3 ", h3.get_shape())
+        h4 = lrelu(bn(conv2d(h3, self.df_dim * 4, name='d_h4_conv' + suffix, d_h=1, d_w=1,
+                             k_w=3, k_h=3), "d_bn_4" + suffix))
+        print("\th4 ", h4.get_shape())
+        h5 = lrelu(bn(conv2d(h4, self.df_dim * 8, name='d_h5_conv' + suffix, d_h=2, d_w=2,
+                             k_w=3, k_h=3), "d_bn_5" + suffix))
+        print("\th5 ", h5.get_shape())
 
-        h6 = lrelu(bn(conv2d(h5, self.df_dim*8, name='d_h6_conv' + suffix,
-            k_w=3, k_h=3), "d_bn_6" + suffix))
-        print "\th6 ", h6.get_shape()
+        h6 = lrelu(bn(conv2d(h5, self.df_dim * 8, name='d_h6_conv' + suffix,
+                             k_w=3, k_h=3), "d_bn_6" + suffix))
+        print("\th6 ", h6.get_shape())
         # return tf.reduce_mean(h6, [1, 2])
         h6_reshaped = tf.reshape(h6, [batch_size, -1])
-        print '\th6_reshaped: ', h6_reshaped.get_shape()
+        print('\th6_reshaped: ', h6_reshaped.get_shape())
 
         h7 = lrelu(bn(linear(h6_reshaped, self.df_dim * 40, scope="d_h7" + suffix), "d_bn_7" + suffix))
 
         return h7
 
     h = tower(self.bnx, "")
-    print "h: ", h.get_shape()
+    print("h: ", h.get_shape())
 
     n_kernels = 300
     dim_per_kernel = 50
@@ -92,14 +93,17 @@ def discriminator(self, image, reuse=False, y=None, prefix=""):
     big += np.eye(batch_size)
     big = tf.expand_dims(big, 1)
 
-    abs_dif = tf.reduce_sum(tf.abs(tf.expand_dims(activation, 3) - tf.expand_dims(tf.transpose(activation, [1, 2, 0]), 0)), 2)
+    abs_dif = tf.reduce_sum(
+        tf.abs(tf.expand_dims(activation, 3) - tf.expand_dims(tf.transpose(activation, [1, 2, 0]), 0)), 2)
     mask = 1. - big
     masked = tf.exp(-abs_dif) * mask
+
     def half(tens, second):
         m, n, _ = tens.get_shape()
         m = int(m)
         n = int(n)
         return tf.slice(tens, [0, 0, second * self.batch_size], [m, n, self.batch_size])
+
     # TODO: speedup by allocating the denominator directly instead of constructing it by sum
     #       (current version makes it easier to play with the mask and not need to rederive
     #        the denominator)
@@ -109,11 +113,10 @@ def discriminator(self, image, reuse=False, y=None, prefix=""):
     minibatch_features = [f1, f2]
 
     x = tf.concat(1, [h] + minibatch_features)
-    print "x: ", x.get_shape()
+    print("x: ", x.get_shape())
     # x = tf.nn.dropout(x, .5)
 
     class_logits = linear(x, num_classes, 'd_indiv_logits')
-
 
     image_means = tf.reduce_mean(image, 0, keep_dims=True)
     mean_sub_image = image - image_means
@@ -140,6 +143,6 @@ def discriminator(self, image, reuse=False, y=None, prefix=""):
 
     return [tf.slice(class_logits, [0, 0], [self.batch_size, num_classes]),
             tf.slice(probs, [0], [self.batch_size]),
-           tf.slice(gan_logits, [0], [self.batch_size]),
-           tf.slice(probs, [self.batch_size], [self.batch_size]),
-           tf.slice(gan_logits, [self.batch_size], [self.batch_size])]
+            tf.slice(gan_logits, [0], [self.batch_size]),
+            tf.slice(probs, [self.batch_size], [self.batch_size]),
+            tf.slice(gan_logits, [self.batch_size], [self.batch_size])]
